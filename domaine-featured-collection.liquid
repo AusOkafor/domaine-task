@@ -26,7 +26,7 @@
                    src="{{ product.featured_image | img_url: '700x' }}" 
                    data-primary="{{ product.featured_image | img_url: '700x' }}" 
                    data-secondary="{% if product.images.size > 1 %}{{ product.images[1] | img_url: '700x' }}{% else %}{{ product.featured_image | img_url: '700x' }}{% endif %}" 
-                    alt="{{ product.title }} 
+                    alt="{{ product.title }}"
                    class="w-full h-full object-cover transition-opacity duration-100 opacity-100 ease-in-out rounded-md product-main-image">
             </a>
           </div>
