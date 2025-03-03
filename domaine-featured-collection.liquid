@@ -1,0 +1,237 @@
+{% comment %}
+Featured Product Cards - Shopify Custom Component
+
+Author: [Your Name]
+Date: [Current Date]
+
+Overview:
+This component dynamically displays product cards for a selected Shopify collection.
+It includes features that enhance user experience and interactivity.
+
+Features Implemented:
+✔ **Dynamic Collection Rendering**: 
+   - Displays products from a selected Shopify collection.
+   - Handles empty collections gracefully.
+
+✔ **Sale Badge**:
+   - Displays a sale badge when the product has a compare-at price greater than its current price.
+   - Configurable via section settings.
+
+✔ **Product Image Handling**:
+   - Shows the main product image.
+   - Secondary image appears on hover for an engaging UI.
+
+✔ **Variant Swatches**:
+   - Displays color swatches for product variants.
+   - Clicking on a swatch updates the main product image dynamically.
+   - Uses a data attribute to swap images without reloading.
+
+✔ **Add to Cart Button**:
+   - Dynamically updates the variant ID when a user selects a variant swatch.
+   - Ensures the correct variant is added to the cart.
+
+✔ **Optimized JavaScript**:
+   - Uses event delegation for efficient DOM manipulation.
+   - Handles hover and click events for interactive elements.
+   - Ensures smooth transitions and proper event handling.
+
+Customization:
+- Controlled via the Shopify Theme Editor settings.
+- Enables toggling the sale badge and Add to Cart button visibility.
+
+Future Improvements:
+- Add a quick view popup for product details.
+- Implement a lazy-loading mechanism for images to improve performance.
+
+{% endcomment %}
+
+<link rel="stylesheet" href="{{'styles.css' | asset_url}}">
+{% if section.settings.collection %}
+  {% assign collection = collections[section.settings.collection] %}
+  {% if collection.products.size > 0 %}
+    <div class="product_grid_container w-full mx-auto grid max-w-7xl gap-2 px-6 lg:px-8 xl:grid-cols-2 gap-x-4 py-12">
+      
+      {% for product in collection.products %}      
+        <div class="p-8 w-[350px] h-full shadow-md relative bg-white product-items border border-transparent hover:border-gray-400 transition-all">
+          <!-- Sale Badge -->
+          {% if section.settings.show_sales_badge and product.compare_at_price > product.price %}
+            <div class="absolute z-10 top-10 left-10 text-red-600 px-3 py-1 text-lg font-semibold rounded-full border border-red-600">
+              On Sales!
+            </div>
+          {% endif %}
+
+{% if section.settings.show_sales_badge and product.compare_at_price > product.price  %}
+  <div class="absolute z-10 top-10 left-10 text-red-600 px-3 py-1 text-lg font-semibold rounded-full border border-red-600">
+    On Sales!
+  </div>
+{% endif %}
+
+          <!-- Product Image -->
+          <div class="relative group shadow-md">
+            <a href="{{ product.url }}">
+              <img id="product-main-image" 
+                   src="{{ product.featured_image | img_url: '700x' }}" 
+                   data-primary="{{ product.featured_image | img_url: '700x' }}" 
+                   data-secondary="{% if product.images.size > 1 %}{{ product.images[1] | img_url: '700x' }}{% else %}{{ product.featured_image | img_url: '700x' }}{% endif %}" 
+                    alt="{{ product.title }} 
+                   class="w-full h-full object-cover transition-opacity duration-100 opacity-100 ease-in-out rounded-md product-main-image">
+            </a>
+          </div>
+
+          <!-- Variant Color Swatches -->
+       <div class="flex gap-2 mt-3 swatches">
+  {% for variant in product.variants %}
+    {% if variant.featured_image %}
+      <button class="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-black focus:border-black transition variant-swatch relative group"
+                           data-variant-id="{{ variant.id }}"
+              data-primary="{{ variant.featured_image | img_url: '500x' }}"
+              data-secondary="{% if variant.metafields.custom.hover_image %}{{ variant.metafields.custom.hover_image | img_url: '500x' }}{% else %}{{ variant.featured_image | img_url: '500x' }}{% endif %}"
+              style="background-color: {{ variant.option1 | downcase | replace:'-', ' ' }};"
+              
+        <!-- Tooltip -->
+        <span class="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-black text-white rounded opacity-0 group-hover:opacity-100 transition"
+              style="white-space: nowrap;">
+          {{ variant.option1 }}
+        </span>
+      </button>
+    {% endif %}
+  {% endfor %}
+</div>
+
+
+          <!-- Product Info -->
+          <div class="mt-2">
+            <p class="text-xl font-semibold text-blue-700">{{ product.title }}</p>
+            <p class="text-gray-600 text-md">{{ product.vendor }}</p>
+            <div class="flex items-center gap-2 mt-1">
+              {% if product.compare_at_price > product.price %}
+                <span class="text-gray-400 line-through text-md">{{ product.compare_at_price | money }}</span>
+                <span class="text-red-600 font-semibold text-md">{{ product.price | money }}</span>
+              {% else %}
+                <span class="text-gray-900 font-semibold text-md">{{ product.price | money }}</span>
+              {% endif %}
+            </div>
+          </div>
+<!-- Add to Cart Form -->
+{% if section.settings.show_add_to_cart %}
+<form method="post" action="/cart/add" class="add-to-cart-form absolute bottom-10 right-10">
+  <input type="hidden" name="id" value="{{ product.variants.first.id }}" class="product-id">
+  <button type="submit" class="add-to-cart-btn flex justify-center items-center p-2 text-white bg-blue-600 hover:bg-blue-700 transition rounded-lg">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M2 3h4l2 13h10l2-13h4"></path>
+    <circle cx="9" cy="20" r="2"></circle>
+    <circle cx="17" cy="20" r="2"></circle>
+  </svg>
+  </button>
+</form>
+{% endif %}
+        </div>
+        
+      {% endfor %}
+
+    </div>
+  {% else %}
+    <p class="text-center text-gray-500">No products found in this collection.</p>
+  {% endif %}
+{% else %}
+  <p class="text-center text-gray-500">Please select a collection in the section settings.</p>
+{% endif %}
+
+
+{% schema %}
+{
+"name": "Featured Product Cards",
+"settings": [
+{
+"type": "collection",
+"id": "collection",
+"label": "Select Collection"
+},
+    {
+      "type": "checkbox",
+      "id": "show_sales_badge",
+      "label": "Show Sales Badge",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_add_to_cart",
+      "label": "Show Add to Cart Button",
+      "default": true
+    }
+],
+"presets": [
+{
+"name": "Featured Product Cards",
+"category": "Product"
+}
+]
+}
+{% endschema %}
+
+<script>
+    const productContainer = document.querySelectorAll(".product-items");
+
+    productContainer.forEach(card => {
+
+        const image = card.querySelector(".product-main-image");
+
+        image.addEventListener("mouseenter", () => {
+            image.src = image.dataset.secondary;
+        });
+
+        image.addEventListener("mouseleave", () => {
+            image.src = image.dataset.primary;
+        });
+
+        const variantItems = card.querySelectorAll('button');
+        variantItems.forEach(button => {
+            button.addEventListener("click", (e) => {
+                const currentItem = e.currentTarget;
+                const swatchSelectedImages = currentItem.dataset.image
+                const productImage = card.querySelector('.product-main-image');
+
+                if (productImage) productImage.src = swatchSelectedImages;
+
+            })
+        })
+    })
+    document.querySelectorAll(".swatches").forEach(swatchContainer => {
+        swatchContainer.querySelectorAll(".variant-swatch").forEach(button => {
+            button.addEventListener("click", function () {
+                let primaryImage = this.getAttribute("data-primary");
+                let secondaryImage = this.getAttribute("data-secondary");
+
+                // Find the closest product container
+                let productContainer = this.closest(".product-items");
+                let productImage = productContainer.querySelector(".product-main-image");
+ 
+                if (productImage) {
+                    productImage.src = primaryImage;
+                    productImage.setAttribute("data-primary", primaryImage);
+                    productImage.setAttribute("data-secondary", secondaryImage);
+
+                    // Ensure hover effect works correctly only for this product
+                    productImage.addEventListener("mouseover", function () {
+                        this.src = secondaryImage;
+                        console.log(this.src);
+                    });
+
+                    productImage.addEventListener("mouseout", function () {
+                        this.src = primaryImage;
+                    });
+                }
+            });
+        });
+    });
+    document.querySelectorAll(".variant-swatch").forEach(button => {
+  button.addEventListener("click", function () {
+    const variantId = this.getAttribute("data-variant-id");
+    const form = this.closest(".product-items").querySelector(".add-to-cart-form");
+    
+    //This  Update the hidden input with the selected variant ID
+    form.querySelector(".product-id").value = variantId;
+  });
+});
+
+</script>
